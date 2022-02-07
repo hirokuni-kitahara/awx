@@ -580,7 +580,11 @@ class ProjectUpdate(UnifiedJob, ProjectOptions, JobNotificationMixin, TaskManage
         help_text=_('The SCM Revision discovered by this update for the given project and branch.'),
     )
 
+<<<<<<< HEAD
     playbook_integrity_result = JSONBlob(
+=======
+    playbook_integrity_result = JSONField(
+>>>>>>> a3fac268c7 (add playbook integrity)
         blank=True,
         default=None,
         null=True,
