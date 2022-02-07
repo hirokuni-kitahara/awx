@@ -3045,8 +3045,8 @@ class JobSerializer(UnifiedJobSerializer, JobOptionsSerializer):
             'webhook_service',
             'webhook_credential',
             'webhook_guid',
-            'integrity_verified',
-            'integrity_result',
+            'playbook_integrity_verified',
+            'playbook_integrity_result',
         )
 
     def get_related(self, obj):
