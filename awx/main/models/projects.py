@@ -377,6 +377,20 @@ class Project(UnifiedJobTemplate, ProjectOptions, ResourceMixin, CustomVirtualEn
         editable=False,
     )
 
+    execution_environment_verification_enabled = models.BooleanField(
+        blank=True,
+        default=False,
+        editable=True,
+        help_text=_('If true, integrity check for execution environment is enabled'),
+    )
+
+    execution_environment_allowed_instance_groups = JSONBlob(
+        default=[],
+        blank=True,
+        editable=True,
+        help_text=_('A list of InstanceGroup names where execution environment verification is configured for this project'),
+    )
+
     @classmethod
     def _get_unified_job_class(cls):
         return ProjectUpdate

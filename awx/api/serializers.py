@@ -1472,6 +1472,8 @@ class ProjectSerializer(UnifiedJobTemplateSerializer, ProjectOptionsSerializer):
             'playbook_integrity_signature_type',
             'playbook_integrity_keyless_signer_id',
             'playbook_integrity_latest_result',
+            'execution_environment_verification_enabled',
+            'execution_environment_allowed_instance_groups',
             'allow_override',
             'custom_virtualenv',
             'default_environment',
