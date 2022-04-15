@@ -776,9 +776,13 @@ class Job(UnifiedJob, JobOptions, SurveyJobMixin, JobNotificationMixin, TaskMana
             template_groups = [x for x in self.job_template.instance_groups.all()]
         else:
             template_groups = []
-        selected_groups = template_groups + inventory_groups + organization_groups
-        if not selected_groups:
-            return self.global_instance_groups
+        candidate_groups = template_groups + inventory_groups + organization_groups
+        if not candidate_groups:
+            candidate_groups = self.global_instance_groups
+        selected_groups = candidate_groups
+        if self.project.execution_environment_verification_enabled:
+            allowed_groups = self.project.execution_environment_allowed_instance_groups
+            selected_groups = [x for x in selected_groups if x.name in allowed_groups]
         return selected_groups
 
     def awx_meta_vars(self):
