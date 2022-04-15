@@ -1476,6 +1476,8 @@ class ProjectSerializer(UnifiedJobTemplateSerializer, ProjectOptionsSerializer):
             'collection_integrity_enabled',
             'collection_integrity_public_key',
             'collection_integrity_latest_result',
+            'execution_environment_verification_enabled',
+            'execution_environment_allowed_instance_groups',
             'allow_override',
             'custom_virtualenv',
             'default_environment',
