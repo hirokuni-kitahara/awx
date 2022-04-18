@@ -1523,14 +1523,16 @@ class RunProjectUpdate(BaseTask):
                     integrity_result["verified"] = False
                     integrity_result["error"] = "playbook \"{}\" is not included in the digest file".format(playbook)
                 integrity_result_list.append(integrity_result)
-            p_integrity_updated_fields.append('playbook_integrity_latest_result')
-            pu_integrity_updated_fields.append('playbook_integrity_result')
-            p.playbook_integrity_latest_result = integrity_result_list
-            instance.playbook_integrity_result = integrity_result_list
-        if p_integrity_updated_fields:
-            p.save(update_fields=p_integrity_updated_fields)
-        if pu_integrity_updated_fields:
-            instance.save(update_fields=pu_integrity_updated_fields)
+        if self.runner_callback.collection_verification_error:
+            # TODO: add the correct fields to project model & job model and use them for reporting error
+            for playbook in p.playbook_files:
+                now = datetime.datetime.utcnow().strftime('%Y-%m-%dT%H:%M:%S.%fZ')
+                integrity_result = {"playbook": playbook, "verified": False, "error": self.runner_callback.collection_verification_error, "timestamp": now}
+                integrity_result_list.append(integrity_result)
+        p.playbook_integrity_latest_result = integrity_result_list
+        p.save(update_fields=['playbook_integrity_latest_result'])
+        instance.playbook_integrity_result = integrity_result_list
+        instance.save(update_fields=['playbook_integrity_result'])
 
         # Update any inventories that depend on this project
         dependent_inventory_sources = p.scm_inventory_sources.filter(update_on_project_update=True)

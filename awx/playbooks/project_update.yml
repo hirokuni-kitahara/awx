@@ -252,10 +252,18 @@
 
     - block:
         - name: fetch galaxy collections from collections/requirements.(yml/yaml)
-          command: >
-            ansible-galaxy collection install -r {{ item }}
-            --collections-path {{projects_root}}/.__awx_cache/{{local_path}}/stage/requirements_collections
-            {{ ' -' + 'v' * ansible_verbosity if ansible_verbosity else '' }}
+          shell: |
+            mkdir -p {{project_path|quote}}/tmp
+            unset ANSIBLE_GALAXY_SERVER_LIST
+            unset ANSIBLE_GALAXY_SERVER_SERVER0_URL
+            ansible-galaxy collection install -r {{ item }} \
+              --collections-path {{projects_root}}/.__awx_cache/{{local_path}}/stage/requirements_collections \
+              {{ ' -' + 'v' * ansible_verbosity if ansible_verbosity else '' }} \
+              --keyring $HOME/.gnupg/pubring.kbx > {{project_path|quote}}/tmp/collection_verify_result 2>&1
+            rc=$?
+            if [ $rc -ne 0 ]; then
+              cp {{project_path|quote}}/tmp/collection_verify_result {{project_path|quote}}/tmp/collection_verify_error
+            fi
           args:
             chdir: "{{project_path|quote}}"
           register: galaxy_collection_result
@@ -266,6 +274,21 @@
             - "{{project_path|quote}}/requirements.yml"
           changed_when: "'Installing ' in galaxy_collection_result.stdout"
           environment: "{{ additional_collections_env | combine(galaxy_task_env) }}"
+        - name: Debug galaxy_collection_result
+          debug:
+            var: galaxy_collection_result
+        - name: Stat collection verify error
+          stat:
+            path: "{{project_path|quote}}/tmp/collection_verify_error"
+          register: col_verify_error
+        - name: Fail if signature verification failed while installing collection
+          fail:
+            msg: "{{lookup('file', col_verify_error.stat.path) }}"
+          when: col_verify_error.stat.exists
+        - name: Set collection verification error
+          set_fact:
+            collection_verification_error: "{{ galaxy_collection_result.stderr }}"
+          when: col_verify_error.stat.exists
 
       when:
         - "ansible_version.full is version_compare('2.9', '>=')"

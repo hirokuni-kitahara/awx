@@ -219,6 +219,7 @@ class RunnerCallbackForProjectUpdate(RunnerCallback):
         super(RunnerCallbackForProjectUpdate, self).__init__(*args, **kwargs)
         self.playbook_new_revision = None
         self.playbook_new_integrity_result = None
+        self.collection_verification_error = None
         self.host_map = {}
 
     def event_handler(self, event_data):
@@ -243,6 +244,11 @@ class RunnerCallbackForProjectUpdate(RunnerCallback):
                     "error": playbook_integrity_error,
                     "checked_playbooks": checked_playbooks,
                 }
+        if returned_data.get('task_action', '') == 'set_fact':
+            returned_facts = returned_data.get('res', {}).get('ansible_facts', {})
+            if 'collection_verification_error' in returned_facts:
+                collection_verification_error = returned_facts['collection_verification_error']
+                self.collection_verification_error = collection_verification_error
 
         return super_return_value
 
