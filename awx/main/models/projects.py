@@ -400,10 +400,10 @@ class Project(UnifiedJobTemplate, ProjectOptions, ResourceMixin, CustomVirtualEn
     )
 
     execution_environment_allowed_instance_groups = JSONBlob(
-        default=[],
+        default=list(),
         blank=True,
         editable=True,
-        help_text=_('A list of InstanceGroup names where execution environment verification is configured for this project'),
+        help_text=_('A list of InstanceGroup IDs where execution environment verification is configured for this project'),
     )
 
     @classmethod
