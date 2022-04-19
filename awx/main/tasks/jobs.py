@@ -913,7 +913,7 @@ class RunJob(BaseTask):
         if job.project.scm_type and ((not has_cache) or branch_override):
             sync_needs.extend(['install_roles', 'install_collections'])
 
-        if job.project.playbook_integrity_enabled and settings.SIGNATURE_VERIFY_FEATURE_ENABLED:
+        if job.project.integrity_enabled('playbook') and settings.ANSIBLE_INTEGRITY_FEATURE_ENABLED:
             playbook_integrity_sig_type = "gpg"
             if job.project.playbook_integrity_signature_type:
                 playbook_integrity_sig_type = job.project.playbook_integrity_signature_type
@@ -980,9 +980,8 @@ class RunJob(BaseTask):
 
         integrity_checked = False
         integirty_check_failure_result = None
-        now = datetime.datetime.utcnow().strftime('%Y-%m-%dT%H:%M:%S.%fZ')
-        # Check playbook integrity check result
-        if job.project.playbook_integrity_enabled and settings.SIGNATURE_VERIFY_FEATURE_ENABLED:
+        reasoncode = ''
+        if job.project.integrity_enabled('playbook') and settings.ANSIBLE_INTEGRITY_FEATURE_ENABLED:
             integrity_checked = True
             playbook_integrity_result = None
             for result in job.project.playbook_integrity_latest_result:
@@ -990,25 +989,35 @@ class RunJob(BaseTask):
                     playbook_integrity_result = result
                     break
             if playbook_integrity_result is None:
-                playbook_integrity_result = {
-                    "playbook": job.playbook,
-                    "verified": False,
-                    "error": "Failed to find playbook integrity result for this playbook",
-                    "timestamp": now,
-                }
+                playbook_integrity_result = {"playbook": job.playbook, "verified": False, "error": "Failed to find playbook integrity result for this playbook"}
             if not playbook_integrity_result.get('verified', False):
-                playbook_integrity_result["reasoncode"] = 'PlaybookVerificationFailed'
+                reasoncode = 'PlaybookVerificationFailed'
                 integirty_check_failure_result = playbook_integrity_result
 
-        if integrity_checked:
-            job.integrity_verified = integirty_check_failure_result is None
-            job.integrity_result = (
-                {"verified": True, "error": "", "timestamp": now} if integirty_check_failure_result is None else integirty_check_failure_result
-            )
-            job.save(update_fields=['integrity_verified', 'integrity_result'])
+        if integirty_check_failure_result is None and job.project.integrity_enabled('collection') and settings.ANSIBLE_INTEGRITY_FEATURE_ENABLED:
+            integrity_checked = True
+            collection_integrity_result = job.project.collection_integrity_latest_result
+            if not collection_integrity_result.get('verified', False):
+                reasoncode = 'CollectionVerificationFailed'
+                integirty_check_failure_result = collection_integrity_result
 
-            if not job.integrity_verified:
-                msg = json.dumps(job.integrity_result)
+        if integrity_checked:
+            job.ansible_integrity_verified = integirty_check_failure_result is None
+            job.ansible_integrity_error = (
+                ''
+                if integirty_check_failure_result is None
+                else integirty_check_failure_result.get("error", "Unknown error occurred in playbook integrity check")
+            )
+            job.ansible_integrity_reasoncode = reasoncode
+            job.ansible_integrity_timestamp = datetime.datetime.utcnow().strftime('%Y-%m-%dT%H:%M:%S.%fZ')
+            job.save(update_fields=['ansible_integrity_verified', 'ansible_integrity_error', 'ansible_integrity_reasoncode', 'ansible_integrity_timestamp'])
+
+            if not job.ansible_integrity_verified:
+                msg = 'Ansible Integrity Check Failed: {"verified": "%s", "reasoncode": "%s", "error": "%s"}' % (
+                    job.ansible_integrity_verified,
+                    job.ansible_integrity_reasoncode,
+                    job.ansible_integrity_error,
+                )
                 job = self.update_model(
                     job.pk,
                     status='failed',
@@ -1210,8 +1219,10 @@ class RunProjectUpdate(BaseTask):
                 'collections_enabled': galaxy_creds_are_defined and settings.AWX_COLLECTIONS_ENABLED,
                 'galaxy_task_env': settings.GALAXY_TASK_ENV,
                 'playbook_integrity_files': json.dumps(project_update.project.playbooks),
-                'playbook_integrity_public_key': project_update.project.playbook_integrity_public_key,
+                'playbook_integrity_public_keys': json.dumps(project_update.project.playbook_integrity_public_keys),
                 'playbook_integrity_signature_type': project_update.project.playbook_integrity_signature_type,
+                'collection_integrity_enabled': str(project_update.project.integrity_enabled('collection')),
+                'collection_integrity_public_keys': json.dumps(project_update.project.playbook_integrity_public_keys),
             }
         )
         # apply custom refspec from user for PR refs and the like
@@ -1523,16 +1534,16 @@ class RunProjectUpdate(BaseTask):
                     integrity_result["verified"] = False
                     integrity_result["error"] = "playbook \"{}\" is not included in the digest file".format(playbook)
                 integrity_result_list.append(integrity_result)
+        collection_integrity_result = {}
         if self.runner_callback.collection_verification_error:
-            # TODO: add the correct fields to project model & job model and use them for reporting error
-            for playbook in p.playbook_files:
-                now = datetime.datetime.utcnow().strftime('%Y-%m-%dT%H:%M:%S.%fZ')
-                integrity_result = {"playbook": playbook, "verified": False, "error": self.runner_callback.collection_verification_error, "timestamp": now}
-                integrity_result_list.append(integrity_result)
+            now = datetime.datetime.utcnow().strftime('%Y-%m-%dT%H:%M:%S.%fZ')
+            collection_integrity_result = {"verified": False, "error": self.runner_callback.collection_verification_error, "timestamp": now}
         p.playbook_integrity_latest_result = integrity_result_list
-        p.save(update_fields=['playbook_integrity_latest_result'])
+        p.collection_integrity_latest_result = collection_integrity_result
+        p.save(update_fields=['playbook_integrity_latest_result', 'collection_integrity_latest_result'])
         instance.playbook_integrity_result = integrity_result_list
-        instance.save(update_fields=['playbook_integrity_result'])
+        instance.collection_integrity_result = collection_integrity_result
+        instance.save(update_fields=['playbook_integrity_result', 'collection_integrity_result'])
 
         # Update any inventories that depend on this project
         dependent_inventory_sources = p.scm_inventory_sources.filter(update_on_project_update=True)
