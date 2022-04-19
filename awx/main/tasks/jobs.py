@@ -538,6 +538,8 @@ class BaseTask(object):
                 res = receptor_job.run()
                 self.unit_id = receptor_job.unit_id
                 logger.info("[DEBUG1] AWXReceptorJob res: {}".format(vars(res)))
+                logger.info("[DEBUG-C1] res._input: {}".format(res._input.read()))
+
                 if not res:
                     return
 
