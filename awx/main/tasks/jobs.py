@@ -537,7 +537,7 @@ class BaseTask(object):
                 receptor_job = AWXReceptorJob(self, params)
                 res = receptor_job.run()
                 self.unit_id = receptor_job.unit_id
-                logger.debug("[DEBUG1] AWXReceptorJob res: {}".format(json.dumps(res)))
+                logger.debug("[DEBUG1] AWXReceptorJob res: {}".format(res))
                 if not res:
                     return
 
@@ -560,6 +560,7 @@ class BaseTask(object):
             self.runner_callback.delay_update(result_traceback=traceback.format_exc())
             logger.exception('%s Exception occurred while running task', self.instance.log_format)
         finally:
+            logger.debug("[DEBUG2] self.runner_callback.event_ct: {}".format(self.runner_callback.event_ct))
             logger.debug('%s finished running, producing %s events.', self.instance.log_format, self.runner_callback.event_ct)
 
         try:
@@ -864,7 +865,7 @@ class RunJob(BaseTask):
             job = self.update_model(job.pk, status='failed', job_explanation=msg)
             raise RuntimeError(msg)
 
-        if job.project.integrity_enabled('container'):
+        if job.project.integrity_enabled('container') and settings.ANSIBLE_INTEGRITY_FEATURE_ENABLED:
             if job.instance_group.name not in job.project.allowed_instance_groups:
                 reasoncode = 'ExecutionEnvironmentInitFailed'
                 msg = _('[{}] The instance group {} is not allwed by the project'.format(reasoncode, job.instance_group.name))
