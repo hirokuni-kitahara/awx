@@ -866,10 +866,11 @@ class RunJob(BaseTask):
 
         if job.project.integrity_enabled('container'):
             if job.instance_group.name not in job.project.allowed_instance_groups:
-                msg = _('The instance group {} is not allwed by the project'.format(job.instance_group.name))
+                reasoncode = 'ExecutionEnvironmentInitFailed'
+                msg = _('[{}] The instance group {} is not allwed by the project'.format(reasoncode, job.instance_group.name))
                 job.ansible_integrity_verified = False
                 job.ansible_integrity_error = msg
-                job.ansible_integrity_reasoncode = 'ExecutionEnvironmentInitFailed'
+                job.ansible_integrity_reasoncode = reasoncode
                 job.ansible_integrity_timestamp = datetime.datetime.utcnow().strftime('%Y-%m-%dT%H:%M:%S.%fZ')
                 job.save(update_fields=['ansible_integrity_verified', 'ansible_integrity_error', 'ansible_integrity_reasoncode', 'ansible_integrity_timestamp'])
                 job = self.update_model(job.pk, status='failed', job_explanation=msg)
@@ -1009,6 +1010,7 @@ class RunJob(BaseTask):
                 if integirty_check_failure_result is None
                 else integirty_check_failure_result.get("error", "Unknown error occurred in playbook integrity check")
             )
+            job.ansible_integrity_error = "[{}] {}".format(reasoncode, job.ansible_integrity_error)
             job.ansible_integrity_reasoncode = reasoncode
             job.ansible_integrity_timestamp = datetime.datetime.utcnow().strftime('%Y-%m-%dT%H:%M:%S.%fZ')
             job.save(update_fields=['ansible_integrity_verified', 'ansible_integrity_error', 'ansible_integrity_reasoncode', 'ansible_integrity_timestamp'])
