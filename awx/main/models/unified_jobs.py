@@ -1335,10 +1335,6 @@ class UnifiedJob(
         if not self.can_start:
             return False
 
-        # If preferred_instance_groups() returns no available groups, stop execution.
-        if len(self.preferred_instance_groups) == 0:
-            return False
-
         # Get any passwords or other data that are prerequisites to running
         # the job.
         needed = self.get_passwords_needed_to_start()
