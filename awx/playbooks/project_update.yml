@@ -322,7 +322,7 @@
           when: collection_integrity_enabled
         - name: Set collection verification error
           set_fact:
-            collection_verification_error: "{{ galaxy_collection_result.stderr }}"
+            collection_verification_error: "{{ lookup('file', project_path|quote + '/tmp/collection_verify_error') }}"
           when: col_verify_error is defined and col_verify_error.stat.exists
       when:
         - "ansible_version.full is version_compare('2.9', '>=')"
