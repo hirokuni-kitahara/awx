@@ -290,7 +290,7 @@
               unset ANSIBLE_GALAXY_SERVER_LIST
               unset ANSIBLE_GALAXY_SERVER_SERVER0_URL
               find {{project_path|quote}}/tmp/pubkeys -type f | xargs gpg --import
-              sigverify_option="--keyring $HOME/.gnupg/pubring.kbx --required-valid-signature-count '+all'"
+              sigverify_option="--keyring $HOME/.gnupg/pubring.kbx --required-valid-signature-count +all"
             fi
             ansible-galaxy collection install -r {{ item }} \
               --collections-path {{projects_root}}/.__awx_cache/{{local_path}}/stage/requirements_collections \
