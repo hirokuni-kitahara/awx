@@ -560,7 +560,7 @@ class BaseTask(object):
                 receptor_job = AWXReceptorJob(self, params)
                 res = receptor_job.run()
                 self.unit_id = receptor_job.unit_id
-                logger.info("[DEBUG1] AWXReceptorJob res: {}".format(res))
+                logger.info("[DEBUG1] AWXReceptorJob res: {}".format(vars(res)))
                 if not res:
                     return
 
@@ -584,7 +584,7 @@ class BaseTask(object):
             extra_update_fields['result_traceback'] = traceback.format_exc()
             logger.exception('%s Exception occurred while running task', self.instance.log_format)
         finally:
-            logger.info("[DEBUG2] self.runner_callback.event_ct: {}".format(self.runner_callback.event_ct))
+            logger.info("[DEBUG2] self.runner_callback.event_ct: {}".format(vars(self.runner_callback.event_ct)))
             logger.debug('%s finished running, producing %s events.', self.instance.log_format, self.runner_callback.event_ct)
 
         try:
