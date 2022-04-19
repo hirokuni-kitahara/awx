@@ -560,7 +560,7 @@ class BaseTask(object):
                 receptor_job = AWXReceptorJob(self, params)
                 res = receptor_job.run()
                 self.unit_id = receptor_job.unit_id
-
+                logger.debug("[DEBUG1] AWXReceptorJob res: {}".format(json.dumps(res)))
                 if not res:
                     return
 
