@@ -368,27 +368,21 @@ class AWXReceptorJob:
                 if state_name == 'Succeeded':
                     return res
 
-                logger.info("[DEBUG-B3] before checking traceback")
                 if not self.task.instance.result_traceback:
                     try:
                         resultsock = receptor_ctl.get_work_results(self.unit_id, return_sockfile=True)
                         lines = resultsock.readlines()
                         receptor_output = b"".join(lines).decode()
                         if receptor_output:
-                            logger.info("[DEBUG-B4] receptor_output: {}".format(receptor_output))
                             self.task.instance.result_traceback = receptor_output
                             self.task.instance.save(update_fields=['result_traceback'])
                         elif detail:
-                            logger.info("[DEBUG-B5] detail: {}".format(detail))
                             self.task.instance.result_traceback = detail
                             self.task.instance.save(update_fields=['result_traceback'])
                         else:
-                            logger.info("[DEBUG-B6] no detail")
                             logger.warning(f'No result details or output from {self.task.instance.log_format}, status:\n{state_name}')
                     except Exception:
-                        logger.info("[DEBUG-B7] exception while checking receptor details")
                         raise RuntimeError(detail)
-        logger.info("[DEBUG3] returning res: {}".format(vars(res)))
         return res
 
     # Spawned in a thread so Receptor can start reading before we finish writing, we
