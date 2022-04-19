@@ -587,6 +587,9 @@ class BaseTask(object):
             logger.info("[DEBUG2] self.runner_callback.event_ct: {}".format(self.runner_callback.event_ct))
             logger.debug('%s finished running, producing %s events.', self.instance.log_format, self.runner_callback.event_ct)
 
+        self.instance = self.update_model(pk)
+        logger.info("[DEBUG3] self.instance: {}".format(vars(self.instance)))
+
         try:
             self.post_run_hook(self.instance, status)
         except PostRunError as exc:
