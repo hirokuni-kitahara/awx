@@ -271,16 +271,25 @@
         - install_roles
 
     - block:
+        - name: show collection_integrity_enabled
+          debug:
+            var: collection_integrity_enabled
         - name: save public keys and import them
           
           shell: mkdir -p {{project_path|quote}}/tmp/pubkeys && echo {{ item }} | base64 -d > {{project_path|quote}}/tmp/pubkeys/{{ index }}_pubring.gpg
           loop: "{{ collection_integrity_public_keys | from_json | list }}"
           loop_control:
             index_var: index
-          when: collection_integrity_enabled | bool
+          when: collection_integrity_enabled
         - name: fetch galaxy collections from collections/requirements.(yml/yaml)
           shell: |
             check_integrity={{ 'True' if collection_integrity_enabled | bool else 'False' }}
+            echo "SCM repo path"
+            ls -la {{project_path|quote}}
+            echo "SCM repo tmp path"
+            ls -la {{project_path|quote}}/tmp
+            echo "SCM repo pubkeys path"
+            ls -la {{project_path|quote}}/tmp/pubkeys
             keyring_option=""
             output_option=""
             if [[ $check_integrity == "True" ]]; then
@@ -317,7 +326,7 @@
           stat:
             path: "{{project_path|quote}}/tmp/collection_verify_error"
           register: col_verify_error
-          when: collection_integrity_enabled | bool
+          when: collection_integrity_enabled
         - name: Set collection verification error
           set_fact:
             collection_verification_error: "{{ galaxy_collection_result.stderr }}"
