@@ -590,19 +590,30 @@ class Job(UnifiedJob, JobOptions, SurveyJobMixin, JobNotificationMixin, TaskMana
         default=1,
         help_text=_("If ran as part of sliced jobs, the total number of slices. " "If 1, job is not part of a sliced job."),
     )
-    integrity_verified = models.BooleanField(
+    ansible_integrity_verified = models.BooleanField(
         blank=True,
         default=None,
         null=True,
         editable=False,
-        help_text=_('Whether integrity verification passed or not'),
+        help_text=_('Overall result of ansible integrity verification'),
     )
-    integrity_result = JSONBlob(
+    ansible_integrity_error = models.TextField(
         blank=True,
-        default=None,
-        null=True,
+        default='',
         editable=False,
-        help_text=_("Overall result of integrity verification"),
+        help_text=_("Error message of ansible integrity"),
+    )
+    ansible_integrity_reasoncode = models.CharField(
+        max_length=128,
+        blank=True,
+        default='',
+        editable=False,
+        help_text=_('Reason code for ansible integrity result'),
+    )
+    ansible_integrity_timestamp = models.TextField(
+        blank=True,
+        editable=False,
+        default='',
     )
 
     def _get_parent_field_name(self):
@@ -798,8 +809,8 @@ class Job(UnifiedJob, JobOptions, SurveyJobMixin, JobNotificationMixin, TaskMana
         if not candidate_groups:
             candidate_groups = self.global_instance_groups
         selected_groups = candidate_groups
-        if self.project.execution_environment_verification_enabled:
-            allowed_groups = self.project.execution_environment_allowed_instance_groups
+        if self.project.container_integrity_enabled:
+            allowed_groups = self.project.allowed_instance_groups
             selected_groups = [x for x in selected_groups if x.name in allowed_groups]
         return selected_groups
 

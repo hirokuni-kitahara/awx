@@ -346,14 +346,16 @@ class Project(UnifiedJobTemplate, ProjectOptions, ResourceMixin, CustomVirtualEn
     playbook_integrity_enabled = models.BooleanField(
         blank=True,
         default=None,
+        editable=True,
         null=True,
         help_text=_('Enable integrity check for playbook and override the global flag'),
     )
 
-    playbook_integrity_public_key = models.TextField(
+    playbook_integrity_public_keys = JSONBlob(
         blank=True,
-        default='',
-        help_text=_("A base64 encoded public key for playbook verification"),
+        default=list,
+        editable=True,
+        help_text=_('List of base64 encoded public keys or Credential IDs'),
     )
 
     playbook_integrity_signature_type = models.CharField(
@@ -379,12 +381,6 @@ class Project(UnifiedJobTemplate, ProjectOptions, ResourceMixin, CustomVirtualEn
         help_text=_('Enable integrity check for collections and override the global flag'),
     )
 
-    collection_integrity_public_key = models.TextField(
-        blank=True,
-        default='',
-        help_text=_("A base64 encoded public key for collection verification"),
-    )
-
     collection_integrity_latest_result = JSONBlob(
         blank=True,
         default=None,
@@ -394,16 +390,39 @@ class Project(UnifiedJobTemplate, ProjectOptions, ResourceMixin, CustomVirtualEn
     
     execution_environment_verification_enabled = models.BooleanField(
         blank=True,
-        default=False,
+        default=None,
         editable=True,
-        help_text=_('If true, integrity check for execution environment is enabled'),
+        null=True,
+        help_text=_('Enable integrity check for collections and override the global flag'),
     )
 
-    execution_environment_allowed_instance_groups = JSONBlob(
-        default=list(),
+    collection_integrity_public_keys = JSONBlob(
+        blank=True,
+        default=list,
+        editable=True,
+        help_text=_('List of base64 encoded public keys or Credential IDs'),
+    )
+
+    collection_integrity_latest_result = JSONBlob(
+        blank=True,
+        default=None,
+        null=True,
+        editable=False,
+    )
+
+    container_integrity_enabled = models.BooleanField(
+        blank=True,
+        default=None,
+        editable=True,
+        null=True,
+        help_text=_('Enable integrity check for execution environment container image and override the global flag'),
+    )
+
+    allowed_instance_groups = JSONBlob(
+        default=list,
         blank=True,
         editable=True,
-        help_text=_('A list of InstanceGroup IDs where execution environment verification is configured for this project'),
+        help_text=_('A list of InstanceGroup names where container verification is configured'),
     )
 
     @classmethod
@@ -495,6 +514,8 @@ class Project(UnifiedJobTemplate, ProjectOptions, ResourceMixin, CustomVirtualEn
             return self.playbook_integrity_enabled
         elif mode == 'collection' and self.collection_integrity_enabled is not None:
             return self.collection_integrity_enabled
+        elif mode == 'container' and self.container_integrity_enabled is not None:
+            return self.container_integrity_enabled
         else:
             return self.integrity_enabled
 
@@ -594,11 +615,7 @@ class ProjectUpdate(UnifiedJob, ProjectOptions, JobNotificationMixin, TaskManage
         help_text=_('The SCM Revision discovered by this update for the given project and branch.'),
     )
 
-<<<<<<< HEAD
     playbook_integrity_result = JSONBlob(
-=======
-    playbook_integrity_result = JSONField(
->>>>>>> a3fac268c7 (add playbook integrity)
         blank=True,
         default=None,
         null=True,

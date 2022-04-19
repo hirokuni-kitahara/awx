@@ -971,14 +971,9 @@ class RunJob(BaseTask):
                     playbook_integrity_result = result
                     break
             if playbook_integrity_result is None:
-                playbook_integrity_result = {
-                    "playbook": job.playbook,
-                    "verified": False,
-                    "error": "Failed to find playbook integrity result for this playbook",
-                    "timestamp": now,
-                }
+                playbook_integrity_result = {"playbook": job.playbook, "verified": False, "error": "Failed to find playbook integrity result for this playbook"}
             if not playbook_integrity_result.get('verified', False):
-                playbook_integrity_result["reasoncode"] = 'PlaybookVerificationFailed'
+                reasoncode = 'PlaybookVerificationFailed'
                 integirty_check_failure_result = playbook_integrity_result
 
         # Check collection integrity check result
@@ -996,8 +991,23 @@ class RunJob(BaseTask):
             )
             job.save(update_fields=['integrity_verified', 'integrity_result'])
 
-            if not job.integrity_verified:
-                msg = json.dumps(job.integrity_result)
+        if integrity_checked:
+            job.ansible_integrity_verified = integirty_check_failure_result is None
+            job.ansible_integrity_error = (
+                ''
+                if integirty_check_failure_result is None
+                else integirty_check_failure_result.get("error", "Unknown error occurred in playbook integrity check")
+            )
+            job.ansible_integrity_reasoncode = reasoncode
+            job.ansible_integrity_timestamp = datetime.datetime.utcnow().strftime('%Y-%m-%dT%H:%M:%S.%fZ')
+            job.save(update_fields=['ansible_integrity_verified', 'ansible_integrity_error', 'ansible_integrity_reasoncode', 'ansible_integrity_timestamp'])
+
+            if not job.ansible_integrity_verified:
+                msg = 'Ansible Integrity Check Failed: {"verified": "%s", "reasoncode": "%s", "error": "%s"}' % (
+                    job.ansible_integrity_verified,
+                    job.ansible_integrity_reasoncode,
+                    job.ansible_integrity_error,
+                )
                 job = self.update_model(
                     job.pk,
                     status='failed',
@@ -1199,10 +1209,10 @@ class RunProjectUpdate(BaseTask):
                 'collections_enabled': galaxy_creds_are_defined and settings.AWX_COLLECTIONS_ENABLED,
                 'galaxy_task_env': settings.GALAXY_TASK_ENV,
                 'playbook_integrity_files': json.dumps(project_update.project.playbooks),
-                'playbook_integrity_public_key': project_update.project.playbook_integrity_public_key,
+                'playbook_integrity_public_keys': json.dumps(project_update.project.playbook_integrity_public_keys),
                 'playbook_integrity_signature_type': project_update.project.playbook_integrity_signature_type,
-                'collection_integrity_enabled': project_update.project.sig_verify_enabled_for('collection'),
-                'collection_integrity_public_key': project_update.project.collection_integrity_public_key,
+                'collection_integrity_enabled': str(project_update.project.integrity_enabled('collection')),
+                'collection_integrity_public_keys': json.dumps(project_update.project.playbook_integrity_public_keys),
             }
         )
         # apply custom refspec from user for PR refs and the like
