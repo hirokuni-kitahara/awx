@@ -331,7 +331,6 @@
           set_fact:
             collection_verification_error: "{{ galaxy_collection_result.stderr }}"
           when: col_verify_error is defined and col_verify_error.stat.exists
-
       when:
         - "ansible_version.full is version_compare('2.9', '>=')"
         - collections_enabled|bool

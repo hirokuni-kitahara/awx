@@ -1235,7 +1235,7 @@ class RunProjectUpdate(BaseTask):
                 'playbook_integrity_public_keys': json.dumps(project_update.project.playbook_integrity_public_keys),
                 'playbook_integrity_signature_type': project_update.project.playbook_integrity_signature_type,
                 'collection_integrity_enabled': str(project_update.project.integrity_enabled('collection')),
-                'collection_integrity_public_keys': json.dumps(project_update.project.playbook_integrity_public_keys),
+                'collection_integrity_public_keys': json.dumps(project_update.project.collection_integrity_public_keys),
             }
         )
         # apply custom refspec from user for PR refs and the like
