@@ -284,25 +284,18 @@
         - name: fetch galaxy collections from collections/requirements.(yml/yaml)
           shell: |
             check_integrity={{ 'True' if collection_integrity_enabled | bool else 'False' }}
-            echo "SCM repo path"
-            ls -la {{project_path|quote}}
-            echo "SCM repo tmp path"
-            ls -la {{project_path|quote}}/tmp
-            echo "SCM repo pubkeys path"
-            ls -la {{project_path|quote}}/tmp/pubkeys
-            keyring_option=""
-            output_option=""
+            mkdir -p {{project_path|quote}}/tmp
+            sigverify_option=""
             if [[ $check_integrity == "True" ]]; then
               unset ANSIBLE_GALAXY_SERVER_LIST
               unset ANSIBLE_GALAXY_SERVER_SERVER0_URL
               find {{project_path|quote}}/tmp/pubkeys -type f | xargs gpg --import
-              keyring_option="$HOME/.gnupg/pubring.kbx"
-              output_option="> {{project_path|quote}}/tmp/collection_verify_result 2>&1"
+              sigverify_option="--keyring $HOME/.gnupg/pubring.kbx --required-valid-signature-count '+all'"
             fi
             ansible-galaxy collection install -r {{ item }} \
               --collections-path {{projects_root}}/.__awx_cache/{{local_path}}/stage/requirements_collections \
               {{ ' -' + 'v' * ansible_verbosity if ansible_verbosity else '' }} \
-              $keyring_option $output_option
+              $sigverify_option > {{project_path|quote}}/tmp/collection_verify_result 2>&1
             rc=$?
             if [[ $check_integrity == "True" ]]; then
               if [ $rc -ne 0 ]; then
