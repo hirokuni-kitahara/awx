@@ -34,7 +34,7 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name='project',
             name='collection_integrity_public_key',
-            field=models.TextField(blank=True, default='', editable=False, help_text='A base64 encoded public key for collection verification'),
+            field=models.TextField(blank=True, default='', help_text='A base64 encoded public key for collection verification'),
         ),
         migrations.AddField(
             model_name='project',
@@ -86,7 +86,7 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name='project',
             name='playbook_integrity_public_key',
-            field=models.TextField(blank=True, default='', editable=False, help_text='A base64 encoded public key for playbook verification'),
+            field=models.TextField(blank=True, default='', help_text='A base64 encoded public key for playbook verification'),
         ),
         migrations.AddField(
             model_name='project',
