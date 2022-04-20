@@ -340,14 +340,12 @@ class Project(UnifiedJobTemplate, ProjectOptions, ResourceMixin, CustomVirtualEn
     integrity_enabled = models.BooleanField(
         blank=True,
         default=False,
-        editable=True,
         help_text=_('Enable integrity check for playbooks, collections and execution environments'),
     )
 
     playbook_integrity_enabled = models.BooleanField(
         blank=True,
         default=None,
-        editable=True,
         null=True,
         help_text=_('Enable integrity check for playbook and override the global flag'),
     )
@@ -355,7 +353,6 @@ class Project(UnifiedJobTemplate, ProjectOptions, ResourceMixin, CustomVirtualEn
     playbook_integrity_public_key = models.TextField(
         blank=True,
         default='',
-        editable=False,
         help_text=_("A base64 encoded public key for playbook verification"),
     )
 
@@ -378,7 +375,6 @@ class Project(UnifiedJobTemplate, ProjectOptions, ResourceMixin, CustomVirtualEn
     collection_integrity_enabled = models.BooleanField(
         blank=True,
         default=None,
-        editable=True,
         null=True,
         help_text=_('Enable integrity check for collections and override the global flag'),
     )
@@ -386,7 +382,6 @@ class Project(UnifiedJobTemplate, ProjectOptions, ResourceMixin, CustomVirtualEn
     collection_integrity_public_key = models.TextField(
         blank=True,
         default='',
-        editable=False,
         help_text=_("A base64 encoded public key for collection verification"),
     )
 
@@ -400,7 +395,6 @@ class Project(UnifiedJobTemplate, ProjectOptions, ResourceMixin, CustomVirtualEn
     container_integrity_enabled = models.BooleanField(
         blank=True,
         default=None,
-        editable=True,
         null=True,
         help_text=_('Enable integrity check for execution environment container image and override the global flag'),
     )
@@ -408,7 +402,6 @@ class Project(UnifiedJobTemplate, ProjectOptions, ResourceMixin, CustomVirtualEn
     container_integrity_allowed_instance_groups = JSONBlob(
         default=list,
         blank=True,
-        editable=True,
         help_text=_('A list of InstanceGroup names where container verification is configured'),
     )
 
