@@ -1020,5 +1020,5 @@ DEFAULT_CONTAINER_RUN_OPTIONS = ['--network', 'slirp4netns:enable_ipv6=true']
 # Mount exposed paths as hostPath resource in k8s/ocp
 AWX_MOUNT_ISOLATED_PATHS_ON_K8S = False
 
-# Whether ansbile integrity feature is enabled or not
-ANSIBLE_INTEGRITY_FEATURE_ENABLED = bool(strtobool(os.getenv('ENABLE_ANSIBLE_INTEGRITY_FEATURE', 'false')))
+# Whether signature verification feature is enabled or not
+SIGNATURE_VERIFY_FEATURE_ENABLED = bool(strtobool(os.getenv('ENABLE_SIGNATURE_VERIFY_FEATURE', 'false')))

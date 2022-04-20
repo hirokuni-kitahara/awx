@@ -340,7 +340,8 @@ class Project(UnifiedJobTemplate, ProjectOptions, ResourceMixin, CustomVirtualEn
     integrity_enabled = models.BooleanField(
         blank=True,
         default=False,
-        help_text=_('Enable integrity check for playbooks and collections'),
+        editable=True,
+        help_text=_('Enable integrity check for playbooks, collections and execution environments'),
     )
 
     playbook_integrity_enabled = models.BooleanField(
@@ -351,11 +352,11 @@ class Project(UnifiedJobTemplate, ProjectOptions, ResourceMixin, CustomVirtualEn
         help_text=_('Enable integrity check for playbook and override the global flag'),
     )
 
-    playbook_integrity_public_keys = JSONBlob(
+    playbook_integrity_public_key = models.TextField(
         blank=True,
-        default=list,
-        editable=True,
-        help_text=_('List of base64 encoded public keys or Credential IDs'),
+        default='',
+        editable=False,
+        help_text=_("A base64 encoded public key for playbook verification"),
     )
 
     playbook_integrity_signature_type = models.CharField(
@@ -396,11 +397,11 @@ class Project(UnifiedJobTemplate, ProjectOptions, ResourceMixin, CustomVirtualEn
         help_text=_('Enable integrity check for collections and override the global flag'),
     )
 
-    collection_integrity_public_keys = JSONBlob(
+    collection_integrity_public_key = models.TextField(
         blank=True,
-        default=list,
-        editable=True,
-        help_text=_('List of base64 encoded public keys or Credential IDs'),
+        default='',
+        editable=False,
+        help_text=_("A base64 encoded public key for collection verification"),
     )
 
     collection_integrity_latest_result = JSONBlob(
@@ -418,7 +419,7 @@ class Project(UnifiedJobTemplate, ProjectOptions, ResourceMixin, CustomVirtualEn
         help_text=_('Enable integrity check for execution environment container image and override the global flag'),
     )
 
-    allowed_instance_groups = JSONBlob(
+    container_integrity_allowed_instance_groups = JSONBlob(
         default=list,
         blank=True,
         editable=True,
