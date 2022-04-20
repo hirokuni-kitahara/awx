@@ -1533,7 +1533,7 @@ class RunProjectUpdate(BaseTask):
 
         p_integrity_updated_fields = []
         pu_integrity_updated_fields = []
-        if p.playbook_integrity_enabled and settings.SIGNATURE_VERIFY_FEATURE_ENABLED:
+        if p.sig_verify_enabled_for('playbook') and settings.SIGNATURE_VERIFY_FEATURE_ENABLED:
             integrity_result_list = []
             playbook_integrity_verified = self.runner_callback.playbook_new_integrity_result.get("verified", None)
             playbook_integrity_error = self.runner_callback.playbook_new_integrity_result.get("error", "")
@@ -1545,16 +1545,23 @@ class RunProjectUpdate(BaseTask):
                     integrity_result["verified"] = False
                     integrity_result["error"] = "playbook \"{}\" is not included in the digest file".format(playbook)
                 integrity_result_list.append(integrity_result)
+            p_integrity_updated_fields.append('playbook_integrity_latest_result')
+            pu_integrity_updated_fields.append('playbook_integrity_result')
+            p.playbook_integrity_latest_result = integrity_result_list
+            instance.playbook_integrity_result = integrity_result_list
         collection_integrity_result = {}
-        if self.runner_callback.collection_verification_error:
+        if p.sig_verify_enabled_for('collection') and settings.SIGNATURE_VERIFY_FEATURE_ENABLED:
             now = datetime.datetime.utcnow().strftime('%Y-%m-%dT%H:%M:%S.%fZ')
-            collection_integrity_result = {"verified": False, "error": self.runner_callback.collection_verification_error, "timestamp": now}
-        p.playbook_integrity_latest_result = integrity_result_list
-        p.collection_integrity_latest_result = collection_integrity_result
-        p.save(update_fields=['playbook_integrity_latest_result', 'collection_integrity_latest_result'])
-        instance.playbook_integrity_result = integrity_result_list
-        instance.collection_integrity_result = collection_integrity_result
-        instance.save(update_fields=['playbook_integrity_result', 'collection_integrity_result'])
+            verified = self.runner_callback.collection_verification_error is None or self.runner_callback.collection_verification_error == ""
+            collection_integrity_result = {"verified": verified, "error": self.runner_callback.collection_verification_error, "timestamp": now}
+            p.collection_integrity_latest_result = collection_integrity_result
+            instance.collection_integrity_result = collection_integrity_result
+            p_integrity_updated_fields.append('collection_integrity_latest_result')
+            pu_integrity_updated_fields.append('collection_integrity_result')
+        if p_integrity_updated_fields:
+            p.save(update_fields=p_integrity_updated_fields)
+        if pu_integrity_updated_fields:
+            instance.save(update_fields=pu_integrity_updated_fields)
 
         # Update any inventories that depend on this project
         dependent_inventory_sources = p.scm_inventory_sources.filter(update_on_project_update=True)
