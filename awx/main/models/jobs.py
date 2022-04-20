@@ -578,30 +578,19 @@ class Job(UnifiedJob, JobOptions, SurveyJobMixin, JobNotificationMixin, TaskMana
         default=1,
         help_text=_("If ran as part of sliced jobs, the total number of slices. " "If 1, job is not part of a sliced job."),
     )
-    ansible_integrity_verified = models.BooleanField(
+    integrity_verified = models.BooleanField(
         blank=True,
         default=None,
         null=True,
         editable=False,
-        help_text=_('Overall result of ansible integrity verification'),
+        help_text=_('Whether integrity verification passed or not'),
     )
-    ansible_integrity_error = models.TextField(
+    integrity_result = JSONBlob(
         blank=True,
-        default='',
+        default=None,
+        null=True,
         editable=False,
-        help_text=_("Error message of ansible integrity"),
-    )
-    ansible_integrity_reasoncode = models.CharField(
-        max_length=128,
-        blank=True,
-        default='',
-        editable=False,
-        help_text=_('Reason code for ansible integrity result'),
-    )
-    ansible_integrity_timestamp = models.TextField(
-        blank=True,
-        editable=False,
-        default='',
+        help_text=_("Overall result of integrity verification"),
     )
 
     def _get_parent_field_name(self):
@@ -790,6 +779,7 @@ class Job(UnifiedJob, JobOptions, SurveyJobMixin, JobNotificationMixin, TaskMana
         selected_groups = template_groups + inventory_groups + organization_groups
         if not selected_groups:
             return self.global_instance_groups
+        return selected_groups
 
     def awx_meta_vars(self):
         r = super(Job, self).awx_meta_vars()

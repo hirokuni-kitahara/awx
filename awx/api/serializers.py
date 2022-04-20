@@ -1467,17 +1467,14 @@ class ProjectSerializer(UnifiedJobTemplateSerializer, ProjectOptionsSerializer):
             'organization',
             'scm_update_on_launch',
             'scm_update_cache_timeout',
-            'ansible_integrity_enabled',
+            'integrity_enabled',
             'playbook_integrity_enabled',
-            'playbook_integrity_public_keys',
+            'playbook_integrity_public_key',
             'playbook_integrity_signature_type',
-<<<<<<< HEAD
-=======
             'collection_integrity_enabled',
-            'collection_integrity_public_keys',
+            'collection_integrity_public_key',
             'container_integrity_enabled',
-            'allowed_instance_groups',
->>>>>>> 586a555526 (update ansible integrity)
+            'container_integrity_allowed_instance_groups',
             'playbook_integrity_latest_result',
             'collection_integrity_latest_result',
             'allow_override',
@@ -3062,10 +3059,8 @@ class JobSerializer(UnifiedJobSerializer, JobOptionsSerializer):
             'webhook_service',
             'webhook_credential',
             'webhook_guid',
-            'ansible_integrity_verified',
-            'ansible_integrity_error',
-            'ansible_integrity_reasoncode',
-            'ansible_integrity_timestamp',
+            'integrity_verified',
+            'integrity_result',
         )
 
     def get_related(self, obj):

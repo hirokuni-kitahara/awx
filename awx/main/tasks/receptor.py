@@ -383,6 +383,7 @@ class AWXReceptorJob:
                             logger.warning(f'No result details or output from {self.task.instance.log_format}, status:\n{state_name}')
                     except Exception:
                         raise RuntimeError(detail)
+
         return res
 
     # Spawned in a thread so Receptor can start reading before we finish writing, we
