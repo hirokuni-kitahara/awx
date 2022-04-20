@@ -263,7 +263,7 @@
           set_fact:
             tmpdir: "{{ tmpdir_cmd.stdout }}"
         - name: save a public key
-          shell: mkdir -p {{ tmpdir }}/pubkeys && echo {{ item }} | base64 -d > {{ tmpdir }}/pubkeys/pubring.kbx
+          shell: mkdir -p {{ tmpdir }}/pubkeys && echo {{ collection_integrity_public_key }} | base64 -d > {{ tmpdir }}/pubkeys/pubring.kbx
           when: collection_integrity_enabled
         - name: fetch galaxy collections from collections/requirements.(yml/yaml)
           shell: |
