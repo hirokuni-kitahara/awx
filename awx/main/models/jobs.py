@@ -173,7 +173,7 @@ class JobOptions(BaseModel):
         editable=False,
         help_text=_('Overall result of playbook integrity verification'),
     )
-    playbook_integrity_result = JSONField(
+    playbook_integrity_result = JSONBlob(
         blank=True,
         default=None,
         null=True,
