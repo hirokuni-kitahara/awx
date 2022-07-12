@@ -22,9 +22,49 @@ class Migration(migrations.Migration):
             field=models.BooleanField(blank=True, default=None, editable=False, help_text='Whether integrity verification passed or not', null=True),
         ),
         migrations.AddField(
+            model_name='job',
+            name='playbook_integrity_result',
+            field=awx.main.fields.JSONBlob(blank=True, default=None, editable=False, null=True),
+        ),
+        migrations.AddField(
+            model_name='job',
+            name='playbook_integrity_verified',
+            field=models.BooleanField(blank=True, default=None, editable=False, help_text='Overall result of playbook integrity verification', null=True),
+        ),
+        migrations.AddField(
+            model_name='jobtemplate',
+            name='playbook_integrity_result',
+            field=awx.main.fields.JSONBlob(blank=True, default=None, editable=False, null=True),
+        ),
+        migrations.AddField(
+            model_name='jobtemplate',
+            name='playbook_integrity_verified',
+            field=models.BooleanField(blank=True, default=None, editable=False, help_text='Overall result of playbook integrity verification', null=True),
+        ),
+        migrations.AddField(
+            model_name='project',
+            name='collection_integrity_enabled',
+            field=models.BooleanField(blank=True, default=None, help_text='Enable integrity check for collections and override the global flag', null=True),
+        ),
+        migrations.AddField(
+            model_name='project',
+            name='collection_integrity_latest_result',
+            field=awx.main.fields.JSONBlob(blank=True, default=None, editable=False, null=True),
+        ),
+        migrations.AddField(
+            model_name='project',
+            name='collection_integrity_public_key',
+            field=models.TextField(blank=True, default='', help_text='A base64 encoded public key for collection verification'),
+        ),
+        migrations.AddField(
+            model_name='project',
+            name='integrity_enabled',
+            field=models.BooleanField(blank=True, default=False, help_text='Enable integrity check for playbooks and collections'),
+        ),
+        migrations.AddField(
             model_name='project',
             name='playbook_integrity_enabled',
-            field=models.BooleanField(blank=True, default=None, help_text='Enable integrity check for playbook', null=True),
+            field=models.BooleanField(blank=True, default=None, help_text='Enable integrity check for playbook and override the global flag', null=True),
         ),
         migrations.AddField(
             model_name='project',
@@ -47,6 +87,11 @@ class Migration(migrations.Migration):
                 max_length=128,
                 verbose_name='signature type for playbook integrity check',
             ),
+        ),
+        migrations.AddField(
+            model_name='projectupdate',
+            name='collection_integrity_result',
+            field=awx.main.fields.JSONBlob(blank=True, default=None, editable=False, null=True),
         ),
         migrations.AddField(
             model_name='projectupdate',
