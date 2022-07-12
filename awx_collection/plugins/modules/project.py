@@ -200,6 +200,16 @@ options:
         - A base64 encoded public key value for collection integrity.
       default: ""
       type: str
+    container_integrity_enabled:
+      description:
+        - Enable EE image integrity check for this project if True.
+      default: False
+      type: bool
+    container_integrity_allowed_instance_groups:
+      description:
+        - list of InstanceGroups where EE verification is configured
+      type: list
+      elements: str
 extends_documentation_fragment: awx.awx.auth
 '''
 
