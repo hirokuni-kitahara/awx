@@ -5,10 +5,7 @@ import base64
 import os
 import re  # noqa
 import sys
-<<<<<<< HEAD
 import tempfile
-=======
->>>>>>> 6e4a166fd8 (add feature flag and its control)
 from distutils.util import strtobool
 from datetime import timedelta
 

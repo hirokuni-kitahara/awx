@@ -337,11 +337,17 @@ class Project(UnifiedJobTemplate, ProjectOptions, ResourceMixin, CustomVirtualEn
         ]
     )
 
+    integrity_enabled = models.BooleanField(
+        blank=True,
+        default=False,
+        help_text=_('Enable integrity check for playbooks and collections'),
+    )
+
     playbook_integrity_enabled = models.BooleanField(
         blank=True,
         default=None,
         null=True,
-        help_text=_('Enable integrity check for playbook'),
+        help_text=_('Enable integrity check for playbook and override the global flag'),
     )
 
     playbook_integrity_public_key = models.TextField(
@@ -360,6 +366,26 @@ class Project(UnifiedJobTemplate, ProjectOptions, ResourceMixin, CustomVirtualEn
     )
 
     playbook_integrity_latest_result = JSONBlob(
+        blank=True,
+        default=None,
+        null=True,
+        editable=False,
+    )
+
+    collection_integrity_enabled = models.BooleanField(
+        blank=True,
+        default=None,
+        null=True,
+        help_text=_('Enable integrity check for collections and override the global flag'),
+    )
+
+    collection_integrity_public_key = models.TextField(
+        blank=True,
+        default='',
+        help_text=_("A base64 encoded public key for collection verification"),
+    )
+
+    collection_integrity_latest_result = JSONBlob(
         blank=True,
         default=None,
         null=True,
@@ -449,6 +475,14 @@ class Project(UnifiedJobTemplate, ProjectOptions, ResourceMixin, CustomVirtualEn
 
     def create_project_update(self, **kwargs):
         return self.create_unified_job(**kwargs)
+
+    def sig_verify_enabled_for(self, mode='all'):
+        if mode == 'playbook' and self.playbook_integrity_enabled is not None:
+            return self.playbook_integrity_enabled
+        elif mode == 'collection' and self.collection_integrity_enabled is not None:
+            return self.collection_integrity_enabled
+        else:
+            return self.integrity_enabled
 
     @property
     def cache_timeout_blocked(self):
@@ -547,6 +581,13 @@ class ProjectUpdate(UnifiedJob, ProjectOptions, JobNotificationMixin, TaskManage
     )
 
     playbook_integrity_result = JSONBlob(
+        blank=True,
+        default=None,
+        null=True,
+        editable=False,
+    )
+
+    collection_integrity_result = JSONBlob(
         blank=True,
         default=None,
         null=True,
@@ -671,10 +712,10 @@ class ProjectUpdate(UnifiedJob, ProjectOptions, JobNotificationMixin, TaskManage
         sig_type = self.project.playbook_integrity_signature_type
         if sig_type:
             playbook_integrity_tag = "playbook_integrity_{}".format(sig_type)
-            if self.project.playbook_integrity_enabled and playbook_integrity_tag not in self.job_tags and self.job_type == 'check':
+            if self.project.sig_verify_enabled_for('playbook') and playbook_integrity_tag not in self.job_tags and self.job_type == 'check':
                 self.job_tags = ','.join([self.job_tags, playbook_integrity_tag])
                 added_update_fields.append('job_tags')
-            elif (not self.project.playbook_integrity_enabled) and playbook_integrity_tag in self.job_tags:
+            elif (not self.project.sig_verify_enabled_for('playbook')) and playbook_integrity_tag in self.job_tags:
                 job_tags = self.job_tags.split(',')
                 job_tags.remove(playbook_integrity_tag)
                 self.job_tags = ','.join(job_tags)

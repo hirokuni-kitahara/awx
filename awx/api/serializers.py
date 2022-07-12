@@ -866,7 +866,7 @@ class UnifiedJobSerializer(BaseSerializer):
         if 'elapsed' in ret:
             if obj and obj.pk and obj.started and not obj.finished:
                 td = now() - obj.started
-                ret['elapsed'] = (td.microseconds + (td.seconds + td.days * 24 * 3600) * 10**6) / (10**6 * 1.0)
+                ret['elapsed'] = (td.microseconds + (td.seconds + td.days * 24 * 3600) * 10 ** 6) / (10 ** 6 * 1.0)
             ret['elapsed'] = float(ret['elapsed'])
         # Because this string is saved in the db in the source language,
         # it must be marked for translation after it is pulled from the db, not when set
@@ -1468,10 +1468,14 @@ class ProjectSerializer(UnifiedJobTemplateSerializer, ProjectOptionsSerializer):
             'organization',
             'scm_update_on_launch',
             'scm_update_cache_timeout',
+            'integrity_enabled',
             'playbook_integrity_enabled',
             'playbook_integrity_public_key',
             'playbook_integrity_signature_type',
             'playbook_integrity_latest_result',
+            'collection_integrity_enabled',
+            'collection_integrity_public_key',
+            'collection_integrity_latest_result',
             'allow_override',
             'custom_virtualenv',
             'default_environment',
@@ -1597,7 +1601,7 @@ class ProjectUpdateViewSerializer(ProjectSerializer):
 class ProjectUpdateSerializer(UnifiedJobSerializer, ProjectOptionsSerializer):
     class Meta:
         model = ProjectUpdate
-        fields = ('*', 'project', 'job_type', 'job_tags', '-controller_node', 'playbook_integrity_result')
+        fields = ('*', 'project', 'job_type', 'job_tags', '-controller_node', 'playbook_integrity_result', 'collection_integrity_result')
 
     def get_related(self, obj):
         res = super(ProjectUpdateSerializer, self).get_related(obj)
