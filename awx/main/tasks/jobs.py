@@ -894,7 +894,7 @@ class RunJob(BaseTask):
         if job.project.scm_type and ((not has_cache) or branch_override):
             sync_needs.extend(['install_roles', 'install_collections'])
 
-        if job.project.playbook_integrity_enabled and settings.SIGNATURE_VERIFY_FEATURE_ENABLED:
+        if job.project.sig_verify_enabled_for('playbook') and settings.SIGNATURE_VERIFY_FEATURE_ENABLED:
             playbook_integrity_sig_type = "gpg"
             if job.project.playbook_integrity_signature_type:
                 playbook_integrity_sig_type = job.project.playbook_integrity_signature_type
@@ -963,7 +963,7 @@ class RunJob(BaseTask):
         integirty_check_failure_result = None
         now = datetime.datetime.utcnow().strftime('%Y-%m-%dT%H:%M:%S.%fZ')
         # Check playbook integrity check result
-        if job.project.playbook_integrity_enabled and settings.SIGNATURE_VERIFY_FEATURE_ENABLED:
+        if job.project.sig_verify_enabled_for('playbook') and settings.SIGNATURE_VERIFY_FEATURE_ENABLED:
             integrity_checked = True
             playbook_integrity_result = None
             for result in job.project.playbook_integrity_latest_result:
@@ -980,6 +980,14 @@ class RunJob(BaseTask):
             if not playbook_integrity_result.get('verified', False):
                 playbook_integrity_result["reasoncode"] = 'PlaybookVerificationFailed'
                 integirty_check_failure_result = playbook_integrity_result
+
+        # Check collection integrity check result
+        if integirty_check_failure_result is None and job.project.sig_verify_enabled_for('collection') and settings.SIGNATURE_VERIFY_FEATURE_ENABLED:
+            integrity_checked = True
+            collection_integrity_result = job.project.collection_integrity_latest_result
+            if not collection_integrity_result.get('verified', False):
+                collection_integrity_result["reasoncode"] = 'CollectionVerificationFailed'
+                integirty_check_failure_result = collection_integrity_result
 
         if integrity_checked:
             job.integrity_verified = integirty_check_failure_result is None
@@ -1193,6 +1201,8 @@ class RunProjectUpdate(BaseTask):
                 'playbook_integrity_files': json.dumps(project_update.project.playbooks),
                 'playbook_integrity_public_key': project_update.project.playbook_integrity_public_key,
                 'playbook_integrity_signature_type': project_update.project.playbook_integrity_signature_type,
+                'collection_integrity_enabled': project_update.project.sig_verify_enabled_for('collection'),
+                'collection_integrity_public_key': project_update.project.collection_integrity_public_key,
             }
         )
         # apply custom refspec from user for PR refs and the like
@@ -1434,7 +1444,7 @@ class RunProjectUpdate(BaseTask):
 
         p_integrity_updated_fields = []
         pu_integrity_updated_fields = []
-        if p.playbook_integrity_enabled and settings.SIGNATURE_VERIFY_FEATURE_ENABLED:
+        if p.sig_verify_enabled_for('playbook') and settings.SIGNATURE_VERIFY_FEATURE_ENABLED:
             integrity_result_list = []
             playbook_integrity_verified = self.runner_callback.playbook_new_integrity_result.get("verified", None)
             playbook_integrity_error = self.runner_callback.playbook_new_integrity_result.get("error", "")
@@ -1450,6 +1460,15 @@ class RunProjectUpdate(BaseTask):
             pu_integrity_updated_fields.append('playbook_integrity_result')
             p.playbook_integrity_latest_result = integrity_result_list
             instance.playbook_integrity_result = integrity_result_list
+        collection_integrity_result = {}
+        if p.sig_verify_enabled_for('collection') and settings.SIGNATURE_VERIFY_FEATURE_ENABLED:
+            now = datetime.datetime.utcnow().strftime('%Y-%m-%dT%H:%M:%S.%fZ')
+            verified = self.runner_callback.collection_verification_error is None or self.runner_callback.collection_verification_error == ""
+            collection_integrity_result = {"verified": verified, "error": self.runner_callback.collection_verification_error, "timestamp": now}
+            p.collection_integrity_latest_result = collection_integrity_result
+            instance.collection_integrity_result = collection_integrity_result
+            p_integrity_updated_fields.append('collection_integrity_latest_result')
+            pu_integrity_updated_fields.append('collection_integrity_result')
         if p_integrity_updated_fields:
             p.save(update_fields=p_integrity_updated_fields)
         if pu_integrity_updated_fields:

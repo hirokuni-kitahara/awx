@@ -169,17 +169,16 @@ options:
       required: False
       default: 2
       type: float
+    integrity_enabled:
+      description:
+        - Enable integrity checks for this project if True.
+      default: False
+      type: bool
     playbook_integrity_enabled:
       description:
         - Enable playbook integrity check for this project if True.
       default: False
       type: bool
-    playbook_integrity_keyless_signer_id:
-      description:
-        - A playbook signer ID for keyless playbook integrity check.
-        - Used as an alternative to public key.
-      default: ""
-      type: str
     playbook_integrity_public_key:
       description:
         - A base64 encoded public key value for playbook integrity.
@@ -191,6 +190,26 @@ options:
       default: "gpg"
       choices: ["gpg", "sigstore"]
       type: str
+    collection_integrity_enabled:
+      description:
+        - Enable collection integrity check for this project if True.
+      default: False
+      type: bool
+    collection_integrity_public_key:
+      description:
+        - A base64 encoded public key value for collection integrity.
+      default: ""
+      type: str
+    container_integrity_enabled:
+      description:
+        - Enable EE image integrity check for this project if True.
+      default: False
+      type: bool
+    container_integrity_allowed_instance_groups:
+      description:
+        - list of InstanceGroups where EE verification is configured
+      type: list
+      elements: str
 extends_documentation_fragment: awx.awx.auth
 '''
 

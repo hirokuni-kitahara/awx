@@ -19,6 +19,8 @@
 # playbook_integrity_files: a json list of playbook filenames
 # playbook_integrity_public_key: a base64 encoded public key for playbook verification
 # playbook_integrity_signature_type: signature type for playbook integrity check
+# collection_integrity_enabled: collection_integrity_enabled boolean flag
+# collection_integrity_public_key: a base64 encoded public key for collection verification
 # awx_version: Current running version of the awx or tower as a string
 # awx_license_type: "open" for AWX; else presume Tower
 
@@ -251,18 +253,34 @@
         - install_roles
 
     - block:
+        - name: show collection_integrity_enabled
+          debug:
+            var: collection_integrity_enabled
+        - name: make tmp dir
+          command: mktemp -d
+          register: tmpdir_cmd
+        - name: set tmpdir
+          set_fact:
+            tmpdir: "{{ tmpdir_cmd.stdout }}"
+        - name: save a public key
+          shell: mkdir -p {{ tmpdir }}/pubkeys && echo {{ collection_integrity_public_key }} | base64 -d > {{ tmpdir }}/pubkeys/pubring.kbx
+          when: collection_integrity_enabled
         - name: fetch galaxy collections from collections/requirements.(yml/yaml)
           shell: |
-            mkdir -p {{project_path|quote}}/tmp
-            unset ANSIBLE_GALAXY_SERVER_LIST
-            unset ANSIBLE_GALAXY_SERVER_SERVER0_URL
+            check_integrity={{ 'True' if collection_integrity_enabled | bool else 'False' }}
+            sigverify_option=""
+            if [[ $check_integrity == "True" ]]; then
+              sigverify_option="--keyring {{ tmpdir }}/pubkeys/pubring.kbx --required-valid-signature-count +all"
+            fi
             ansible-galaxy collection install -r {{ item }} \
               --collections-path {{projects_root}}/.__awx_cache/{{local_path}}/stage/requirements_collections \
               {{ ' -' + 'v' * ansible_verbosity if ansible_verbosity else '' }} \
-              --keyring $HOME/.gnupg/pubring.kbx > {{project_path|quote}}/tmp/collection_verify_result 2>&1
+              $sigverify_option > {{ tmpdir }}/collection_verify_result 2>&1
             rc=$?
-            if [ $rc -ne 0 ]; then
-              cp {{project_path|quote}}/tmp/collection_verify_result {{project_path|quote}}/tmp/collection_verify_error
+            if [[ $check_integrity == "True" ]]; then
+              if [ $rc -ne 0 ]; then
+                cp {{ tmpdir }}/collection_verify_result {{ tmpdir }}/collection_verify_error
+              fi
             fi
           args:
             chdir: "{{project_path|quote}}"
@@ -273,29 +291,19 @@
             - "{{project_path|quote}}/requirements.yaml"
             - "{{project_path|quote}}/requirements.yml"
           changed_when: "'Installing ' in galaxy_collection_result.stdout"
-          environment:
-            ANSIBLE_FORCE_COLOR: false
-            ANSIBLE_COLLECTIONS_PATHS: "{{projects_root}}/.__awx_cache/{{local_path}}/stage/requirements_collections"
-            GIT_SSH_COMMAND: "ssh -o StrictHostKeyChecking=no"
-            # Put the local tmp directory in same volume as collection destination
-            # otherwise, files cannot be moved accross volumes and will cause error
-            ANSIBLE_LOCAL_TEMP: "{{projects_root}}/.__awx_cache/{{local_path}}/stage/tmp"
+          environment: "{{ additional_collections_env | combine(galaxy_task_env) }}"
         - name: Debug galaxy_collection_result
           debug:
             var: galaxy_collection_result
         - name: Stat collection verify error
           stat:
-            path: "{{project_path|quote}}/tmp/collection_verify_error"
+            path: "{{ tmpdir }}/collection_verify_error"
           register: col_verify_error
-        - name: Fail if signature verification failed while installing collection
-          fail:
-            msg: "{{lookup('file', col_verify_error.stat.path) }}"
-          when: col_verify_error.stat.exists
+          when: collection_integrity_enabled
         - name: Set collection verification error
           set_fact:
-            collection_verification_error: "{{ galaxy_collection_result.stderr }}"
-          when: col_verify_error.stat.exists
-
+            collection_verification_error: "{{ lookup('file', tmpdir + '/collection_verify_error') }}"
+          when: col_verify_error.stat is defined and col_verify_error.stat.exists
       when:
         - "ansible_version.full is version_compare('2.9', '>=')"
         - collections_enabled|bool
