@@ -22,26 +22,6 @@ class Migration(migrations.Migration):
             field=models.BooleanField(blank=True, default=None, editable=False, help_text='Whether integrity verification passed or not', null=True),
         ),
         migrations.AddField(
-            model_name='job',
-            name='playbook_integrity_result',
-            field=awx.main.fields.JSONBlob(blank=True, default=None, editable=False, null=True),
-        ),
-        migrations.AddField(
-            model_name='job',
-            name='playbook_integrity_verified',
-            field=models.BooleanField(blank=True, default=None, editable=False, help_text='Overall result of playbook integrity verification', null=True),
-        ),
-        migrations.AddField(
-            model_name='jobtemplate',
-            name='playbook_integrity_result',
-            field=awx.main.fields.JSONBlob(blank=True, default=None, editable=False, null=True),
-        ),
-        migrations.AddField(
-            model_name='jobtemplate',
-            name='playbook_integrity_verified',
-            field=models.BooleanField(blank=True, default=None, editable=False, help_text='Overall result of playbook integrity verification', null=True),
-        ),
-        migrations.AddField(
             model_name='project',
             name='collection_integrity_enabled',
             field=models.BooleanField(blank=True, default=None, help_text='Enable integrity check for collections and override the global flag', null=True),
