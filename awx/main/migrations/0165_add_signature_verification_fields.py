@@ -51,26 +51,6 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name='project',
             name='integrity_enabled',
-            field=models.BooleanField(blank=True, default=False, help_text='Enable integrity check for playbooks, collections and execution environments'),
-        ),
-        migrations.AddField(
-            model_name='project',
-            name='collection_integrity_enabled',
-            field=models.BooleanField(blank=True, default=None, help_text='Enable integrity check for collections and override the global flag', null=True),
-        ),
-        migrations.AddField(
-            model_name='project',
-            name='collection_integrity_latest_result',
-            field=awx.main.fields.JSONBlob(blank=True, default=None, editable=False, null=True),
-        ),
-        migrations.AddField(
-            model_name='project',
-            name='collection_integrity_public_key',
-            field=models.TextField(blank=True, default='', help_text='A base64 encoded public key for collection verification'),
-        ),
-        migrations.AddField(
-            model_name='project',
-            name='integrity_enabled',
             field=models.BooleanField(blank=True, default=False, help_text='Enable integrity check for playbooks and collections'),
         ),
         migrations.AddField(
