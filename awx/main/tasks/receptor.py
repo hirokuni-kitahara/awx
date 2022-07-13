@@ -9,7 +9,6 @@ import shutil
 import socket
 import time
 import yaml
-import json
 
 # Django
 from django.conf import settings
